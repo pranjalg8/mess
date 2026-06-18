@@ -126,6 +126,24 @@
     .dot-ind.live { background: var(--wa-green); } .dot-ind.local { background: var(--haldi); }
     footer { text-align: center; color: var(--ink-soft); font-size: .82rem; margin-top: 16px; }
 
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 480px) {
+      body { padding: 12px 12px 48px; }
+      h1 { font-size: 1.75rem; }
+      .meal-label { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .meal-tools { width: 100%; justify-content: space-between; }
+      .slot.opt { flex-wrap: wrap; }
+      .slot input.dish { width: 100%; flex: 1 1 100%; order: 3; margin-top: 4px; }
+      .badge { width: 48px; font-size: .6rem; }
+      .extras-row { flex-direction: column; gap: 14px; }
+      .roster-pills { gap: 6px; }
+      .pill { font-size: .8rem; padding: 4px 10px 4px 6px; }
+      .pill .num { width: 18px; height: 18px; font-size: .7rem; }
+      .tabs button { font-size: .8rem; padding: 7px 4px; }
+      .preview-wrap { padding: 12px 8px; }
+      .bubble { max-width: 95%; }
+    }
+
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
