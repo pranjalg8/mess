@@ -166,11 +166,12 @@
     <button class="link-btn" id="swap-toggle">🔁 Swap / cover this week</button>
     <div class="swap-panel" id="swap-panel">
       <div class="field-row" style="align-items:flex-end;">
-        <div class="field"><label class="lbl" for="swap-who">Covered by</label><select id="swap-who"></select></div>
-        <div class="field" style="flex:1 1 100%;"><label class="lbl" for="swap-reason">Reason (optional)</label><input type="text" id="swap-reason" placeholder="e.g. Pranjal travelling" /></div>
+        <div class="field" style="flex:1 1 120px;"><label class="lbl" for="swap-who">Covered by</label><select id="swap-who"></select></div>
+        <div class="field" style="flex:0 0 70px;"><label class="lbl" for="swap-days">Days</label><input type="number" id="swap-days" value="7" min="1" max="7" style="width:100%; font-family:inherit; font-size:.98rem; padding:10px; border-radius:11px; border:1px solid var(--line); background:#FCFAF6; color:var(--ink);" /></div>
+        <div class="field" style="flex:1 1 100%;"><label class="lbl" for="swap-reason">Reason (optional)</label><input type="text" id="swap-reason" placeholder="e.g. out of town" /></div>
       </div>
       <button class="btn ghost sm" id="swap-confirm" style="margin-top:10px;">Confirm swap</button>
-      <p class="hint">A swap rebalances future weeks automatically — whoever's covered comes up sooner.</p>
+      <p class="hint">A swap rebalances future weeks automatically based on days covered.</p>
     </div>
     <div class="field-row" style="margin-top:14px;">
       <div class="field" style="flex:0 0 auto;">
@@ -444,14 +445,14 @@
         state.rot = localState(); state.backend = "local";
       }
     }
-    async function doSwap(newM, reason) {
+    async function doSwap(newM, reason, days) {
       const d = new Date();
+      const origM = state.rot.manager;
       if (state.backend === "live") {
-        try { const r = await jsonp({ action: "swap", week: weekKey(d), manager: newM, note: reason || "", start: mondayOf(d) }); if (r && r.ok) { state.rot = { manager: r.manager, counts: r.counts, swapped: true }; return true; } } catch (e) {}
+        try { const r = await jsonp({ action: "swap", week: weekKey(d), manager: newM, origM: origM, note: reason || "", days: days, start: mondayOf(d) }); if (r && r.ok) { state.rot = { manager: r.manager, counts: r.counts, swapped: true }; return true; } } catch (e) {}
       }
-      const orig = state.rot.manager;
-      state.rot.counts[orig] = Math.max(0, (state.rot.counts[orig] || 0) - 1);
-      state.rot.counts[newM] = (state.rot.counts[newM] || 0) + 1;
+      state.rot.counts[origM] = Math.max(0, (state.rot.counts[origM] || 0) - days);
+      state.rot.counts[newM] = (state.rot.counts[newM] || 0) + days;
       state.rot.manager = newM; state.rot.swapped = true; return true;
     }
 
@@ -496,7 +497,7 @@
     function renderRoster() {
       const r = state.rot; const pills = $('#roster-pills'); pills.innerHTML = "";
       ROSTER.forEach(p => { const on = p === r.manager; const el = document.createElement("span"); el.className = "pill" + (on ? " on" : ""); el.innerHTML = `<span class="num">${r.counts[p] || 0}</span>${p}${on ? " · on duty" : ""}`; pills.appendChild(el); });
-      $('#duty-line').innerHTML = `<b>${r.manager}</b> is mess manager this week (${weekKey(new Date())}). Numbers show weeks served — lowest goes next.` + (r.swapped ? " <i>Swapped.</i>" : "");
+      $('#duty-line').innerHTML = `<b>${r.manager}</b> is mess manager this week (${weekKey(new Date())}). Numbers show days served — lowest goes next.` + (r.swapped ? " <i>Swapped.</i>" : "");
       const sel = $('#swap-who'); sel.innerHTML = ""; ROSTER.filter(p => p !== r.manager).forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; sel.appendChild(o); });
     }
     function renderGrocery() { const ul = $('#grocery'); const list = deriveGrocery(); ul.innerHTML = list.length ? list.map(x => `<li><span>${x.item}</span><span class="amt">${x.amt}</span></li>`).join("") : `<li><span>Nothing flagged — generate a menu.</span></li>`; }
@@ -558,11 +559,11 @@
 
     $('#swap-toggle').addEventListener('click', () => $('#swap-panel').classList.toggle('open'));
     $('#swap-confirm').addEventListener('click', async () => {
-      const who = $('#swap-who').value; const reason = $('#swap-reason').value.trim(); if (!who) return;
+      const who = $('#swap-who').value; const reason = $('#swap-reason').value.trim(); const days = parseInt($('#swap-days').value) || 7; if (!who) return;
       $('#swap-confirm').disabled = true; $('#swap-confirm').textContent = "Saving…";
-      await doSwap(who, reason);
+      await doSwap(who, reason, days);
       $('#swap-confirm').disabled = false; $('#swap-confirm').textContent = "Confirm swap";
-      $('#swap-panel').classList.remove('open'); $('#swap-reason').value = ""; render();
+      $('#swap-panel').classList.remove('open'); $('#swap-reason').value = ""; $('#swap-days').value = "7"; render();
     });
     $('#wa-share').addEventListener('click', logMenu);
     $('#copy').addEventListener('click', async () => {
